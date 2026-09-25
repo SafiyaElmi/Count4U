@@ -5,10 +5,12 @@ WORKDIR /app
 # PostgreSQL support for Supabase
 RUN install-php-extensions pdo_pgsql
 
-# Copy the Count4U project into the container
+# Copy the Caddy configuration
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Copy the Count4U project
 COPY . /app
 
-# Vercel provides the PORT environment variable
 ENV PORT=80
 
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
