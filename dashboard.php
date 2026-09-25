@@ -1,5 +1,7 @@
 <?php
+
 session_start();
+
 include 'db_connection.php';
 
 if (!isset($_SESSION["user_id"])) {
@@ -9,9 +11,10 @@ if (!isset($_SESSION["user_id"])) {
 
 $user_id = (int) $_SESSION["user_id"];
 
+$user_name = $_SESSION["name"] ?? "User";
+
 try {
 
-    // Today's sales
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(total_amount), 0) AS total
         FROM sale
@@ -25,8 +28,6 @@ try {
 
     $today_sales = $stmt->fetch()["total"];
 
-
-    // Items sold today
     $stmt = $conn->prepare("
         SELECT COALESCE(SUM(si.quantity), 0) AS total
         FROM sale_item si
@@ -41,8 +42,6 @@ try {
 
     $items_sold = $stmt->fetch()["total"];
 
-
-    // Low stock count
     $stmt = $conn->query("
         SELECT COUNT(*) AS total
         FROM product
@@ -51,8 +50,6 @@ try {
 
     $low_stock_count = $stmt->fetch()["total"];
 
-
-    // Total products
     $stmt = $conn->query("
         SELECT COUNT(*) AS total
         FROM product
@@ -60,8 +57,6 @@ try {
 
     $total_products = $stmt->fetch()["total"];
 
-
-    // Low stock products
     $stmt = $conn->query("
         SELECT product_name, quantity, low_stock_level
         FROM product
@@ -72,8 +67,6 @@ try {
 
     $low_stock_products = $stmt->fetchAll();
 
-
-    // Best sellers
     $stmt = $conn->prepare("
         SELECT
             p.product_name,
@@ -95,8 +88,6 @@ try {
 
     $best_sellers = $stmt->fetchAll();
 
-
-    // Slow sellers
     $stmt = $conn->prepare("
         SELECT
             p.product_name,
@@ -123,8 +114,6 @@ try {
 
     $slow_sellers = $stmt->fetchAll();
 
-
-    // Recent sales
     $stmt = $conn->prepare("
         SELECT sale_id, sale_date, total_amount
         FROM sale
@@ -145,6 +134,7 @@ try {
     die("Dashboard error: " . htmlspecialchars($e->getMessage()));
 
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -154,22 +144,14 @@ try {
 
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <title>Dashboard - Count4U</title>
+    <title>Dashboard | Count4U</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
-
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-        rel="stylesheet"
-    >
+        rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
 
@@ -177,24 +159,33 @@ try {
 
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="dashboard-navbar">
 
-    <div class="container-fluid">
+    <div class="container">
 
-        <a class="navbar-brand" href="dashboard.php">
-            Count4U
-        </a>
+        <div class="d-flex justify-content-between align-items-center">
 
-        <div class="d-flex align-items-center">
-
-            <span class="text-white me-3">
-                Welcome,
-                <?= htmlspecialchars($_SESSION["name"] ?? "") ?>
-            </span>
-
-            <a href="logout.php" class="btn btn-outline-light">
-                Logout
+            <a
+                href="dashboard.php"
+                class="dashboard-logo text-decoration-none"
+            >
+                Count<span>4U</span>
             </a>
+
+            <div class="d-flex align-items-center gap-3">
+
+                <span class="welcome-text d-none d-md-block">
+                    Hi, <?php echo htmlspecialchars($user_name); ?>
+                </span>
+
+                <a
+                    href="logout.php"
+                    class="btn btn-outline-light btn-sm"
+                >
+                    Logout
+                </a>
+
+            </div>
 
         </div>
 
@@ -202,245 +193,370 @@ try {
 
 </nav>
 
+<main class="dashboard-container">
 
-<div class="container mt-4">
+    <div class="container">
 
-    <h1 class="mb-4">
-        Dashboard
-    </h1>
+        <div class="mb-4">
 
+            <h1 class="dashboard-title">
+                Good day, <?php echo htmlspecialchars($user_name); ?> 👋
+            </h1>
 
-    <!-- Statistics -->
+            <p class="dashboard-subtitle">
+                Here's what's happening in your shop today.
+            </p>
 
-    <div class="row g-4 mb-4">
+        </div>
 
-        <div class="col-md-3">
+        <div class="row g-4 mb-4">
 
-            <div class="card p-3">
+            <div class="col-md-6">
 
-                <h6>Today's Sales</h6>
+                <div class="action-card">
 
-                <h3>
-                    R<?= number_format((float)$today_sales, 2) ?>
-                </h3>
+                    <div class="action-icon">
+                        🛒
+                    </div>
+
+                    <h4>
+                        Sell Items
+                    </h4>
+
+                    <p>
+                        Select products, add them to the cart
+                        and complete a sale.
+                    </p>
+
+                    <a
+                        href="sell_items.php"
+                        class="btn action-btn"
+                    >
+                        Start Selling →
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="action-card green">
+
+                    <div class="action-icon">
+                        📦
+                    </div>
+
+                    <h4>
+                        Stock Up
+                    </h4>
+
+                    <p>
+                        Add newly purchased stock to your products.
+                    </p>
+
+                    <a
+                        href="stock_up.php"
+                        class="btn action-btn"
+                    >
+                        Add Stock →
+                    </a>
+
+                </div>
 
             </div>
 
         </div>
 
+        <div class="row g-4 mb-4">
 
-        <div class="col-md-3">
+            <div class="col-md-3">
 
-            <div class="card p-3">
+                <div class="stat-card">
 
-                <h6>Items Sold Today</h6>
+                    <div class="stat-icon">
+                        💰
+                    </div>
 
-                <h3>
-                    <?= (int)$items_sold ?>
-                </h3>
+                    <div class="stat-label">
+                        Today's Sales
+                    </div>
+
+                    <div class="stat-value">
+                        R<?php echo number_format($today_sales, 2); ?>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        🛍️
+                    </div>
+
+                    <div class="stat-label">
+                        Items Sold Today
+                    </div>
+
+                    <div class="stat-value">
+                        <?php echo $items_sold; ?>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-3">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        ⚠️
+                    </div>
+
+                    <div class="stat-label">
+                        Low Stock
+                    </div>
+
+                    <div class="stat-value">
+                        <?php echo $low_stock_count; ?>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-3">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        📦
+                    </div>
+
+                    <div class="stat-label">
+                        Total Products
+                    </div>
+
+                    <div class="stat-value">
+                        <?php echo $total_products; ?>
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
 
+        <div class="row g-4 mb-4">
 
-        <div class="col-md-3">
+            <div class="col-lg-4">
 
-            <div class="card p-3">
+                <div class="content-card">
 
-                <h6>Low Stock</h6>
+                    <h4>
+                        ⚠️ Low Stock
+                    </h4>
 
-                <h3>
-                    <?= (int)$low_stock_count ?>
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <div class="card p-3">
-
-                <h6>Total Products</h6>
-
-                <h3>
-                    <?= (int)$total_products ?>
-                </h3>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <div class="row g-4">
-
-
-        <!-- Low stock -->
-
-        <div class="col-md-6">
-
-            <div class="card p-3">
-
-                <h4>Low Stock Products</h4>
-
-                <?php if (empty($low_stock_products)): ?>
-
-                    <p>No products are currently low in stock.</p>
-
-                <?php else: ?>
-
-                    <ul class="list-group">
+                    <?php if (!empty($low_stock_products)): ?>
 
                         <?php foreach ($low_stock_products as $product): ?>
 
-                            <li class="list-group-item d-flex justify-content-between">
+                            <div class="stock-row">
 
-                                <span>
-                                    <?= htmlspecialchars($product["product_name"]) ?>
+                                <span class="stock-name">
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $product["product_name"]
+                                    );
+                                    ?>
                                 </span>
 
-                                <span>
-                                    <?= (int)$product["quantity"] ?>
+                                <span class="stock-number">
+                                    <?php
+                                    echo $product["quantity"];
+                                    ?>
+                                    left
                                 </span>
 
-                            </li>
+                            </div>
 
                         <?php endforeach; ?>
 
-                    </ul>
+                    <?php else: ?>
 
-                <?php endif; ?>
+                        <p class="text-muted">
+                            All products have enough stock.
+                        </p>
+
+                    <?php endif; ?>
+
+                </div>
 
             </div>
 
-        </div>
+            <div class="col-lg-4">
 
+                <div class="content-card">
 
-        <!-- Best sellers -->
+                    <h4>
+                        🏆 Best Sellers
+                    </h4>
 
-        <div class="col-md-6">
-
-            <div class="card p-3">
-
-                <h4>Best Sellers</h4>
-
-                <?php if (empty($best_sellers)): ?>
-
-                    <p>No sales recorded yet.</p>
-
-                <?php else: ?>
-
-                    <ul class="list-group">
+                    <?php if (!empty($best_sellers)): ?>
 
                         <?php foreach ($best_sellers as $product): ?>
 
-                            <li class="list-group-item d-flex justify-content-between">
+                            <div class="product-row">
 
-                                <span>
-                                    <?= htmlspecialchars($product["product_name"]) ?>
+                                <span class="product-name">
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $product["product_name"]
+                                    );
+                                    ?>
                                 </span>
 
-                                <span>
-                                    <?= (int)$product["total_sold"] ?> sold
+                                <span class="product-number">
+                                    <?php
+                                    echo $product["total_sold"];
+                                    ?>
+                                    sold
                                 </span>
 
-                            </li>
+                            </div>
 
                         <?php endforeach; ?>
 
-                    </ul>
+                    <?php else: ?>
 
-                <?php endif; ?>
+                        <p class="text-muted">
+                            No sales recorded yet.
+                        </p>
+
+                    <?php endif; ?>
+
+                </div>
 
             </div>
 
-        </div>
+            <div class="col-lg-4">
 
+                <div class="content-card">
 
-        <!-- Slow sellers -->
+                    <h4>
+                        📉 Slow Sellers
+                    </h4>
 
-        <div class="col-md-6">
-
-            <div class="card p-3">
-
-                <h4>Slow Sellers</h4>
-
-                <?php if (empty($slow_sellers)): ?>
-
-                    <p>No products found.</p>
-
-                <?php else: ?>
-
-                    <ul class="list-group">
+                    <?php if (!empty($slow_sellers)): ?>
 
                         <?php foreach ($slow_sellers as $product): ?>
 
-                            <li class="list-group-item d-flex justify-content-between">
+                            <div class="product-row">
 
-                                <span>
-                                    <?= htmlspecialchars($product["product_name"]) ?>
+                                <span class="product-name">
+                                    <?php
+                                    echo htmlspecialchars(
+                                        $product["product_name"]
+                                    );
+                                    ?>
                                 </span>
 
-                                <span>
-                                    <?= (int)$product["total_sold"] ?> sold
+                                <span class="product-number">
+                                    <?php
+                                    echo $product["total_sold"];
+                                    ?>
+                                    sold
                                 </span>
 
-                            </li>
+                            </div>
 
                         <?php endforeach; ?>
 
-                    </ul>
+                    <?php else: ?>
 
-                <?php endif; ?>
+                        <p class="text-muted">
+                            No sales recorded yet.
+                        </p>
+
+                    <?php endif; ?>
+
+                </div>
 
             </div>
 
         </div>
 
+        <div class="row">
 
-        <!-- Recent sales -->
+            <div class="col-12">
 
-        <div class="col-md-6">
+                <div class="content-card">
 
-            <div class="card p-3">
+                    <h4>
+                        🧾 Recent Sales
+                    </h4>
 
-                <h4>Recent Sales</h4>
-
-                <?php if (empty($recent_sales)): ?>
-
-                    <p>No sales recorded yet.</p>
-
-                <?php else: ?>
-
-                    <ul class="list-group">
+                    <?php if (!empty($recent_sales)): ?>
 
                         <?php foreach ($recent_sales as $sale): ?>
 
-                            <li class="list-group-item">
+                            <div class="sale-row">
 
                                 <div>
-                                    Sale #<?= (int)$sale["sale_id"] ?>
+
+                                    <div class="sale-id">
+                                        Sale #<?php
+                                        echo $sale["sale_id"];
+                                        ?>
+                                    </div>
+
+                                    <div class="sale-date">
+
+                                        <?php
+                                        echo date(
+                                            "d M Y, H:i",
+                                            strtotime($sale["sale_date"])
+                                        );
+                                        ?>
+
+                                    </div>
+
                                 </div>
 
-                                <small>
-                                    <?= htmlspecialchars($sale["sale_date"]) ?>
-                                </small>
+                                <div class="sale-amount">
 
-                                <strong>
-                                    R<?= number_format((float)$sale["total_amount"], 2) ?>
-                                </strong>
+                                    R<?php
+                                    echo number_format(
+                                        $sale["total_amount"],
+                                        2
+                                    );
+                                    ?>
 
-                            </li>
+                                </div>
+
+                            </div>
 
                         <?php endforeach; ?>
 
-                    </ul>
+                    <?php else: ?>
 
-                <?php endif; ?>
+                        <div class="text-center py-4">
+
+                            <p class="text-muted mb-0">
+                                No sales have been recorded yet.
+                            </p>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                </div>
 
             </div>
 
@@ -448,8 +564,7 @@ try {
 
     </div>
 
-</div>
+</main>
 
 </body>
-
 </html>
