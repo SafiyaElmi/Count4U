@@ -2,12 +2,13 @@ FROM dunglas/frankenphp:1-php8.4-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql-dev \
-    && docker-php-ext-install pdo_pgsql \
-    && php -m | grep -E 'PDO|pdo_pgsql'
+# PostgreSQL support for Supabase
+RUN install-php-extensions pdo_pgsql
 
+# Copy the Caddy configuration
 COPY Caddyfile /etc/caddy/Caddyfile
 
+# Copy the Count4U project
 COPY . /app
 
 ENV PORT=80
