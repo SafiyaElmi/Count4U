@@ -1,13 +1,19 @@
 <?php
 
-$databaseUrl = getenv('DATABASE_URL');
+$host   = getenv('DB_HOST');
+$port   = getenv('DB_PORT');
+$user   = getenv('DB_USER');
+$pass   = getenv('DB_PASSWORD');
+$dbname = getenv('DB_NAME');
 
-if (!$databaseUrl) {
-    die("Database connection failed: DATABASE_URL is not configured.");
+if (!$host || !$port || !$user || !$pass || !$dbname) {
+    die("Database connection failed: Missing environment variables.");
 }
 
+$dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
+
 try {
-    $conn = new PDO($databaseUrl, null, null, [
+    $conn = new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => true
